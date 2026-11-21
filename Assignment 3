@@ -1,1 +1,118 @@
+import re
 
+def normalise_phone(phone):
+    digits = re.sub(r"\D", "", phone or "")
+
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+
+    return digits
+
+
+def normalise_email(email):
+    return (email or "").strip().lower()
+
+
+contacts = [
+    {"name": "Dr. Ravi", "phones": ["+91 98400 12345"],
+     "emails": ["RAVI@example.com"]},
+
+    {"name": "Ravi Kumar", "phones": ["9840012345", "9876543210"],
+     "emails": ["ravi@example.com"]},
+
+    {"name": "Anita", "phones": ["9000011111"],
+     "emails": ["anita@example.com"]},
+
+    {"name": "Anita", "phones": ["9000022222"],
+     "emails": []},
+
+    {"name": "Kumar", "phones": [],
+     "emails": ["kumar@example.com"]}
+]
+
+
+merged = []
+phone_owner = {}
+email_owner = {}
+
+for contact in contacts:
+
+    phones = {
+        normalise_phone(p) for p in contact["phones"]
+    }
+
+    emails = {
+        normalise_email(e) for e in contact["emails"]
+    }
+
+    phones.discard("")
+    emails.discard("")
+
+    matched_indexes = set()
+
+    for phone in phones:
+        if phone in phone_owner:
+            matched_indexes.add(phone_owner[phone])
+
+    for email in emails:
+        if email in email_owner:
+            matched_indexes.add(email_owner[email])
+
+    if not matched_indexes:
+        merged.append({
+            "names": {contact["name"]},
+            "phones": set(phones),
+            "emails": set(emails)
+        })
+
+        target = len(merged) - 1
+
+    else:
+        target = min(matched_indexes)
+
+        merged[target]["names"].add(contact["name"])
+        merged[target]["phones"].update(phones)
+        merged[target]["emails"].update(emails)
+
+        for other in sorted(matched_indexes - {target}, reverse=True):
+
+            merged[target]["names"].update(
+                merged[other]["names"]
+            )
+
+            merged[target]["phones"].update(
+                merged[other]["phones"]
+            )
+
+            merged[target]["emails"].update(
+                merged[other]["emails"]
+            )
+
+            merged.pop(other)
+
+        phone_owner = {}
+        email_owner = {}
+
+        for i, group in enumerate(merged):
+
+            for p in group["phones"]:
+                phone_owner[p] = i
+
+            for e in group["emails"]:
+                email_owner[e] = i
+
+    for phone in merged[target]["phones"]:
+        phone_owner[phone] = target
+
+    for email in merged[target]["emails"]:
+        email_owner[email] = target
+
+
+print("Merged contacts:")
+
+for group in merged:
+    print({
+        "names": sorted(group["names"]),
+        "phones": sorted(group["phones"]),
+        "emails": sorted(group["emails"])
+    })
