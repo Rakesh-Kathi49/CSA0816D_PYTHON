@@ -1,1 +1,65 @@
 
+from decimal import Decimal, ROUND_HALF_UP
+
+def rate_per_litre(fat, snf, season="normal"):
+    fat_dec = Decimal(str(fat))
+    snf_dec = Decimal(str(snf))
+
+    if season == "summer":
+        base = Decimal("32.00")
+        fat_val = Decimal("0.45")
+    else:
+        base = Decimal("30.00")
+        fat_val = Decimal("0.40")
+
+    snf_val = Decimal("0.30")
+
+    fat_steps = ((fat_dec - Decimal("3.5")) / Decimal("0.1")).quantize(
+        Decimal("1"), rounding=ROUND_HALF_UP
+    )
+
+    snf_steps = ((snf_dec - Decimal("8.5")) / Decimal("0.1")).quantize(
+        Decimal("1"), rounding=ROUND_HALF_UP
+    )
+
+    rate = base + (fat_steps * fat_val) + (snf_steps * snf_val)
+
+    return rate.quantize(Decimal("0.01"))
+
+
+def bonus(total_litres):
+    litres_dec = Decimal(str(total_litres))
+
+    if litres_dec > Decimal("500"):
+        return (litres_dec * Decimal("0.50")).quantize(Decimal("0.01"))
+
+    return Decimal("0.00")
+
+
+def ten_day_total(entries, season="normal"):
+    total_litres = sum(Decimal(str(e[0])) for e in entries)
+
+    payment_subtotal = sum(
+        Decimal(str(e[0])) * rate_per_litre(e[1], e[2], season)
+        for e in entries
+    )
+
+    b = bonus(total_litres)
+
+    return total_litres, payment_subtotal, b, payment_subtotal + b
+
+
+summer_entries = [
+    ("200", "3.50", "8.50"),
+    ("200", "4.25", "8.50"),
+    ("150", "3.50", "8.50")
+]
+
+tot_l, sub, bon, final = ten_day_total(summer_entries, season="summer")
+
+print("Season: Summer")
+print("Total Litres:", tot_l)
+print("Subtotal Payout: Rs", sub)
+print("Bonus: Rs", bon)
+print("Final Payout: Rs", final)
+
