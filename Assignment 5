@@ -1,1 +1,64 @@
 
+import sqlite3
+import time
+
+# Create database
+con = sqlite3.connect(":memory:")
+
+con.execute("""
+CREATE TABLE readings(
+    station TEXT,
+    day TEXT,
+    pm25 REAL
+)
+""")
+
+# Sample data
+sample = [
+    ("Adyar", "2026-10-01", 48.0),
+    ("Guindy", "2026-10-01", 95.0),
+    ("Guindy", "2026-10-03", 121.0),
+    ("Adyar", "2026-10-04", 60.0)
+]
+
+con.executemany(
+    "INSERT INTO readings VALUES(?,?,?)", sample
+)
+
+# Query execution before indexing
+query = """
+SELECT AVG(pm25)
+FROM readings
+WHERE station=? AND day=?
+"""
+
+t0 = time.perf_counter()
+
+for _ in range(1000):
+    con.execute(
+        query, ("Adyar", "2026-10-01")
+    ).fetchone()
+
+before = time.perf_counter() - t0
+
+# Create index
+con.execute("""
+CREATE INDEX idx_station_day
+ON readings(station, day)
+""")
+
+# Query execution after indexing
+t0 = time.perf_counter()
+
+for _ in range(1000):
+    con.execute(
+        query, ("Adyar", "2026-10-01")
+    ).fetchone()
+
+after = time.perf_counter() - t0
+
+print("Before index:", round(before, 6))
+print("After index:", round(after, 6))
+
+con.close()
+
