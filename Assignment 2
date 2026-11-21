@@ -1,1 +1,69 @@
+import time
 
+# Original program: Normal recursion
+
+original_calls = 0
+
+def original_ways(n):
+    global original_calls
+
+    original_calls += 1
+
+    if n == 0 or n == 1:
+        return 1
+
+    return original_ways(n - 1) + original_ways(n - 2)
+
+
+start = time.perf_counter()
+
+original_calls = 0
+original_result = original_ways(30)
+
+original_time = time.perf_counter() - start
+
+
+# Redesigned program: Iterative Dynamic Programming
+
+redesigned_operations = 0
+
+def redesigned_ways(n):
+    global redesigned_operations
+
+    if n == 0 or n == 1:
+        return 1
+
+    a = 1
+    b = 1
+
+    for i in range(2, n + 1):
+        redesigned_operations += 1
+        a, b = b, a + b
+
+    return b
+
+
+start = time.perf_counter()
+
+redesigned_operations = 0
+redesigned_result = redesigned_ways(30)
+
+redesigned_time = time.perf_counter() - start
+
+
+# Display results
+
+print("Original Result:", original_result)
+print("Original Calls:", original_calls)
+print("Original Time:", original_time)
+
+print("\nRedesigned Result:", redesigned_result)
+print("Redesigned Operations:", redesigned_operations)
+print("Redesigned Time:", redesigned_time)
+
+print("\nSame Result:", original_result == redesigned_result)
+
+print("\nFinal Comparison")
+print("Input: 30")
+print("Original Function Calls:", original_calls)
+print("Redesigned Loop Iterations:", redesigned_operations)
